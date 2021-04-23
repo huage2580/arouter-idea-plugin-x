@@ -4,20 +4,14 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
-import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
-import com.intellij.navigation.NavigationItem
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.searches.AnnotatedMembersSearch
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.callName
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaClassDescriptor
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -49,17 +43,8 @@ class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
             val arguments = psiElement.valueArguments
             if (arguments.size == 1){
                 val targetPath = arguments[0].text.replace("\"", "")
-                val fullScope = GlobalSearchScope.allScope(psiElement.project)
-                val routeAnnotationWrapper = AnnotatedMembersSearch.search(getAnnotationWrapper(psiElement, fullScope)
-                        ?: return, fullScope).findAll()
-                val target = routeAnnotationWrapper.find {
-                    it.modifierList?.annotations?.map { it.findAttributeValue("path")?.text?.replace("\"", "") }?.contains(targetPath)
-                            ?: false
-                }
-
-                if (null != target) {
-                    // Redirect to target.
-                    NavigationItem::class.java.cast(target).navigate(true)
+                val found = NavigationHelper.findTargetAndNavigate(psiElement, targetPath, e)
+                if (found){
                     return
                 }
             }
@@ -70,14 +55,6 @@ class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
 
     private fun notifyNotFound() {
         Notifications.Bus.notify(Notification(NOTIFY_SERVICE_NAME, NOTIFY_TITLE, NOTIFY_NO_TARGET_TIPS, NotificationType.WARNING))
-    }
-
-    private fun getAnnotationWrapper(psiElement: PsiElement?, scope: GlobalSearchScope): PsiClass? {
-        if (null == routeAnnotationWrapper) {
-            routeAnnotationWrapper = JavaPsiFacade.getInstance(psiElement?.project).findClass(ROUTE_ANNOTATION_NAME, scope)
-        }
-
-        return routeAnnotationWrapper
     }
 
     override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {}
@@ -125,7 +102,6 @@ class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
     }
 
     companion object {
-        const val ROUTE_ANNOTATION_NAME = "com.alibaba.android.arouter.facade.annotation.Route"
         const val SDK_NAME = "ARouter"
 
         // Notify
@@ -136,6 +112,4 @@ class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
         val navigationOnIcon = IconLoader.getIcon("/icon/outline_my_location_black_18dp.png")
     }
 
-    // I'm 100% sure this point can not made memory leak.
-    private var routeAnnotationWrapper: PsiClass? = null
 }
