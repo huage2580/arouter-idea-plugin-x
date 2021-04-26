@@ -3,7 +3,7 @@ plugins {
     id "org.jetbrains.intellij" version '0.4.21'
 }
 
-version '2.1.1'
+version '2.1.2'
 
 intellij {
     version '2020.1.3'
@@ -18,7 +18,7 @@ patchPluginXml {
       for kotlin  
       阿里的朋友一直不舍得进行插件的更新，只能自己来了，希望能帮到大家。  
       """
-    sinceBuild '162.*' //最低版本限制
+    sinceBuild '173.*' //最低版本限制
     untilBuild '333.*' //最高版本限制 好像必须指定
 }
 

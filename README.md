@@ -8,6 +8,8 @@ support kotlin &amp; Android studio4.1
 |![wechat](https://github.com/huage2580/arouter-idea-plugin-x/blob/master/wechat.png)|![wechat](https://github.com/huage2580/arouter-idea-plugin-x/blob/master/alipay.png)|
 
 ## version  
+### v2.1.2
+>增加路径的usages列表,点击注解可以查看使用
 ### v2.1.1 
 >增加多个path目标跳转时，选择目标类的弹窗
 ### v2.0.1
