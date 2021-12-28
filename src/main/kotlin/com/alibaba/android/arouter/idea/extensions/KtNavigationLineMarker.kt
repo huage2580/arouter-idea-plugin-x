@@ -1,6 +1,5 @@
 package com.alibaba.android.arouter.idea.extensions
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
@@ -10,29 +9,29 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaClassDescriptor
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
-import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.nj2k.postProcessing.resolve
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import java.awt.event.MouseEvent
+import java.util.function.Supplier
 
 /**
  * Mark navigation target.
- *
- * @author zhilong <a href="mailto:zhilong.liu@aliyun.com">Contact me.</a>
- * @version 1.0
- * @since 2018/12/13 12:30 PM
  */
 class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<PsiElement> {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
 //        System.out.println(element.javaClass.name +" | "+ element.text)
         return if (isNavigationCall(element)) {
-            LineMarkerInfo<PsiElement>(element, element.textRange, navigationOnIcon,
-                    Pass.UPDATE_ALL, null, this,
-                    GutterIconRenderer.Alignment.LEFT)
+            LineMarkerInfo(element,element.textRange, NavigationLineMarker.navigationOnIcon,null,this,GutterIconRenderer.Alignment.LEFT,
+                Supplier { "ARouter Marker" })
         } else {
             null
         }
@@ -42,7 +41,7 @@ class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
         if (psiElement is KtCallExpression){
             val arguments = psiElement.valueArguments
             if (arguments.size == 1){
-                val targetPath = arguments[0].text.replace("\"", "")
+                val targetPath = resolvePath(arguments[0])
                 val found = NavigationHelper.findTargetAndNavigate(psiElement, targetPath, e)
                 if (found){
                     return
@@ -53,11 +52,16 @@ class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
         notifyNotFound()
     }
 
+
+
     private fun notifyNotFound() {
         Notifications.Bus.notify(Notification(NOTIFY_SERVICE_NAME, NOTIFY_TITLE, NOTIFY_NO_TARGET_TIPS, NotificationType.WARNING))
     }
 
-    override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {}
+    override fun collectSlowLineMarkers(
+        elements: @NotNull MutableList<out PsiElement>,
+        result: @NotNull MutableCollection<in LineMarkerInfo<*>>
+    ) {}
 
     /**
      * Judge whether the code used for navigation.
@@ -110,6 +114,28 @@ class KtNavigationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
         const val NOTIFY_NO_TARGET_TIPS = "No destination found or unsupported type."
 
         val navigationOnIcon = IconLoader.getIcon("/icon/outline_my_location_black_18dp.png")
+
+        //获取路径
+        fun resolvePath(element:Any):String{
+            val path = when(element){
+                is KtValueArgument -> {
+                    when(val child = element.firstChild){
+                        is KtStringTemplateExpression->child.text//普通字符串
+                        is KtNameReferenceExpression->{//常量引用
+                            child.resolve()!!.lastChild.text
+                        }
+                        is KtDotQualifiedExpression->{//java里面的static常量
+                            val children = (child.lastChild as KtReferenceExpression).resolve()!!.children
+                            val target = children.findLast { it is PsiLiteralExpressionImpl}
+                            target!!.text
+                        }
+                        else->child.text
+                    }
+                }
+                else->element.toString()
+            }
+            return path.replace("\"", "")
+        }
     }
 
 }

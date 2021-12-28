@@ -56,7 +56,7 @@ object NavigationHelper {
     fun findUsagesMethod(psiElement: PsiElement,e: MouseEvent?):Boolean{
         var path:String = ""
         if (psiElement is KtAnnotationEntry){//kotlin
-            path = (psiElement.children[1] as KtValueArgumentList).arguments[0].getArgumentExpression()?.text?:return false
+            path = (psiElement.children[1] as KtValueArgumentList).arguments[0].getArgumentExpression()?.text?.replace("\"", "")?:return false
         }
         if (psiElement is PsiAnnotationImpl){//java
             path = (psiElement.children[2] as PsiAnnotationParamListImpl).attributes[0].detachedValue?.text?.replace("\"", "")?:return false
@@ -129,7 +129,7 @@ object NavigationHelper {
 
     private fun getAnnotationWrapper(psiElement: PsiElement?, scope: GlobalSearchScope): PsiClass? {
         if (null == routeAnnotationWrapper) {
-            routeAnnotationWrapper = JavaPsiFacade.getInstance(psiElement?.project).findClass(ROUTE_ANNOTATION_NAME, scope)
+            routeAnnotationWrapper = JavaPsiFacade.getInstance(psiElement!!.project).findClass(ROUTE_ANNOTATION_NAME, scope)
         }
 
         return routeAnnotationWrapper
@@ -137,7 +137,7 @@ object NavigationHelper {
 
     private fun getMethodWrapper(psiElement: PsiElement?, scope: GlobalSearchScope): PsiMethod? {
         if (null == routeMethodWrapper) {
-            val routerClass = JavaPsiFacade.getInstance(psiElement?.project).findClass(ROUTER_FULL_NAME, scope) ?: return null
+            val routerClass = JavaPsiFacade.getInstance(psiElement!!.project).findClass(ROUTER_FULL_NAME, scope) ?: return null
             routeMethodWrapper = routerClass.findMethodsByName("build",false)[0]
         }
 

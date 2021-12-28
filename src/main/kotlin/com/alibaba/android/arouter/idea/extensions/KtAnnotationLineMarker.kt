@@ -10,6 +10,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import java.awt.event.MouseEvent
@@ -21,9 +22,8 @@ class KtAnnotationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
         return if (isARouterAnnotation(element)) {
-            LineMarkerInfo<PsiElement>(element, element.textRange, navigationOnIcon,
-                    Pass.UPDATE_ALL, null, this,
-                    GutterIconRenderer.Alignment.LEFT)
+            LineMarkerInfo(element,element.textRange, NavigationLineMarker.navigationOnIcon,null,this,GutterIconRenderer.Alignment.LEFT,
+                { "ARouter Marker" })
         } else {
             null
         }
@@ -51,7 +51,10 @@ class KtAnnotationLineMarker : LineMarkerProvider, GutterIconNavigationHandler<P
         Notifications.Bus.notify(Notification(NOTIFY_SERVICE_NAME, NOTIFY_TITLE, NOTIFY_NO_TARGET_TIPS, NotificationType.WARNING))
     }
 
-    override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {}
+    override fun collectSlowLineMarkers(
+        elements: @NotNull MutableList<out PsiElement>,
+        result: @NotNull MutableCollection<in LineMarkerInfo<*>>
+    ) {}
 
 
     companion object {

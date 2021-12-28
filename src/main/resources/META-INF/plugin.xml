@@ -1,13 +1,14 @@
 <idea-plugin>
     <id>arouter-roadsign</id>
     <name>ARouter Helper X</name>
-    <version>2.0.1</version>
+    <version>2.1.2</version>
     <vendor email="2838666797@qq.com" url="https://github.com/huage2580">Huage2580</vendor>
-    <idea-version since-build="201.6668.113"/>
+    <idea-version since-build="173.*"/>
     <depends>com.intellij.modules.java</depends>
-    <depends optional="true" config-file="">org.jetbrains.kotlin</depends>
+    <depends>org.jetbrains.kotlin</depends>
     <description><![CDATA[
     Support to track navigation target.
+    update by github:huage2580
     ]]></description>
 
     <extensions defaultExtensionNs="com.intellij">
