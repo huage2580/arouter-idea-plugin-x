@@ -1,9 +1,10 @@
 <idea-plugin>
-    <id>arouter-roadsign</id>
+    <id>arouter-roadsign-x</id>
     <name>ARouter Helper X</name>
     <version>2.1.2</version>
     <vendor email="2838666797@qq.com" url="https://github.com/huage2580">Huage2580</vendor>
     <idea-version since-build="173.*"/>
+    <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.kotlin</depends>
     <description><![CDATA[

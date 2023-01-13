@@ -151,7 +151,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                     CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         } else {
             int offset = editor.getCaretModel().getOffset();
-            boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, processor,
+            boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(project,editor, offset, processor,
                     FindBundle.message("find.usages.ambiguous.title", "crap"), null);
             if (!chosen) {
                 ApplicationManager.getApplication().invokeLater(() -> {
@@ -514,11 +514,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         });
 
         MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
-        messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, pingEDT::ping);
+        messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
+            @Override
+            public void run() {
+                pingEDT.ping();
+            }
+        });
 
         Processor<Usage> collect = new Processor<Usage>() {
             private UsageTarget[] myUsageTarget = {
-                    new PsiElement2UsageTargetAdapter(handler.getPsiElement())
+                    new PsiElement2UsageTargetAdapter(handler.getPsiElement(),true)
             };
 
             @Override
@@ -1014,11 +1019,27 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
         @Override
         public Object getData(@NonNls String dataId) {
-            if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
-                int[] selected = getSelectedRows();
-                if (selected.length == 1) {
-                    return getPsiElementForHint(getValueAt(selected[0], 0));
-                }
+            if("bgtDataProvider".equals(dataId)){
+                return getBackgroundDataProvider();
+            }
+//            if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+//                int[] selected = getSelectedRows();
+//                if (selected.length == 1) {
+//                    return getPsiElementForHint(getValueAt(selected[0], 0));
+//                }
+//            }
+            return null;
+        }
+
+        private DataProvider getBackgroundDataProvider() {
+            int[] selected = getSelectedRows();
+            if (selected.length == 1) {
+                return otherId -> {
+                    if (CommonDataKeys.PSI_ELEMENT.is(otherId)) {
+                        return getPsiElementForHint(getValueAt(selected[0], 0));
+                    }
+                    return null;
+                };
             }
             return null;
         }
@@ -1064,14 +1085,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
 
         @Override
-        protected int convertIndexToModel(int viewIndex) {
-            return getTable().convertRowIndexToModel(viewIndex);
+        protected int getElementCount() {
+            return ((MyModel) getTable().getModel()).getItems().size();
         }
 
-        @NotNull
         @Override
-        protected Object[] getAllElements() {
-            return ((MyModel) getTable().getModel()).getItems().toArray();
+        protected Object getElementAt(int viewIndex) {
+            return ((MyModel) getTable().getModel()).getItems().get(viewIndex);
         }
 
         @Override

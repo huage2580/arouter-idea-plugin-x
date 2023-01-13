@@ -15,7 +15,9 @@ multiple target select dialog;
 |----|----|
 |![wechat](https://github.com/huage2580/arouter-idea-plugin-x/blob/master/wechat.png)|![wechat](https://github.com/huage2580/arouter-idea-plugin-x/blob/master/alipay.png)|
 
-## version  
+## version
+### v2.2.1
+>支持Android Studio Electric Eel | 2022.1.1
 ### v2.2.0
 >支持非直接字符串，使用常量定义的路径（不支持注解中使用常量的场景）  
 ### v2.1.2
